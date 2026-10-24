@@ -356,6 +356,105 @@ def main():   # Função principal do programa.
         data_venda_invalida.sum()
     )
 
+
+    # Relatório de Status Manual
+    print("\n========== RELATÓRIO DE STATUS MANUAL ==========")
+
+    print("\n--- Resumo geral ---")
+    print("Total de linhas lidas:", len(dados))
+    print("Categorias vazias preenchidas:", categorias_vazias)
+    print("Categorias não vazias alteradas:", categorias_alteradas)
+    print("Problemas em quantidade:", problema_quantidade.sum())
+    print("Problemas em preço:", problema_preco.sum())
+    print("Pedidos distintos com problemas numéricos:", pedido_com_problema.sum())
+    print("Datas de venda inválidas ou ausentes:", data_venda_invalida.sum())
+
+    total_cancelados = (
+        dados["status_pedido"]
+        .astype("string")
+        .str.strip()
+        .str.lower()
+        .eq("cancelado")
+        .sum()
+    )
+    print("Total de pedidos cancelados:", total_cancelados)
+
+    print("\n--- Pedidos sem data de entrega ---")
+    sem_data_cancelados = sem_data_entrega & status_cancelado
+
+    print("Sem data de entrega e cancelados:", sem_data_cancelados.sum())
+    print("Sem data de entrega e não cancelados:", sem_data_e_nao_cancelado.sum())
+    print("Total sem data de entrega:", sem_data_entrega.sum())
+
+    print("\n--- Pedidos por canal reconhecido ---")
+    canais_reconhecidos = ["Mercado", "Loja física", "Web"]
+    canal_reconhecido = dados["canal_venda"].isin(canais_reconhecidos)
+
+    pedidos_por_canal_reconhecido = (
+        dados.loc[canal_reconhecido, "canal_venda"]
+        .value_counts()
+        .reindex(canais_reconhecidos, fill_value=0)
+    )
+
+    print(pedidos_por_canal_reconhecido.to_string())
+    print("Pedidos com canal reconhecido:", canal_reconhecido.sum())
+    print("Pedidos excluídos por canal não reconhecido:", (~canal_reconhecido).sum())
+    print("Inclui todos os status de pedido.")
+
+    print("\n--- Pedidos por ano e mês ---")
+    print(pedidos_por_periodo.to_string())
+    print("Pedidos incluídos:", pedidos_por_periodo.sum())
+    print("Pedidos excluídos por data inválida:", data_venda_invalida.sum())
+    print("Inclui todos os status de pedido.")
+
+    print("\nAs contagens representam pedidos registrados, não receita nem vendas concluídas.")
+
+    # Salva os dados processados em um novo arquivo
+    caminho_saida = "Arquivos/halloween_vendas_processado.csv"
+
+    dados.to_csv(
+        caminho_saida,
+        index=False,
+        encoding="utf-8-sig"
+    )
+
+    print(f"\nArquivo processado salvo em: {caminho_saida}")
+
+
+    # Exporta resumo por canal
+    resumo_canal = pedidos_por_canal_reconhecido.rename(
+        "quantidade_pedidos"
+    ).reset_index()
+
+    resumo_canal = resumo_canal.rename(
+        columns={"index": "canal_venda"}
+    )
+
+    resumo_canal["percentual"] = (
+        resumo_canal["quantidade_pedidos"]
+        / resumo_canal["quantidade_pedidos"].sum()
+        * 100
+    ).round(2)
+
+    resumo_canal.to_csv(
+        "Arquivos/resumo_por_canal.csv",
+        index=False,
+        encoding="utf-8-sig"
+    )
+
+     # Exporta resumo por período
+    resumo_periodo = pedidos_por_periodo.rename(
+        "quantidade_pedidos"
+    ).reset_index()
+
+    resumo_periodo.to_csv(
+        "Arquivos/resumo_por_periodo.csv",
+        index=False,
+        encoding="utf-8-sig"
+    )
+
+    print("\nResumos exportados com sucesso.")
+
     
 # Executa a função principal quando este arquivo é iniciado diretamente.
 if __name__ == "__main__":
