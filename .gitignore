@@ -1,0 +1,6 @@
+# Arquivos Python temporários
+__pycache__/
+*.py[cod]
+
+# Banco de dados original
+Arquivos/halloween_vendas.csv
