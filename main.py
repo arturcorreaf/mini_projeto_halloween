@@ -239,6 +239,123 @@ def main():   # Função principal do programa.
         pedido_com_problema
     )
 
+
+    # Investiga pedidos sem data de entrega
+    sem_data_entrega = dados["data_entrega"].isna()
+
+    status_cancelado = (
+        dados["status_pedido"]
+        .astype("string")
+        .str.strip()
+        .str.lower()
+        .eq("cancelado")
+        .fillna(False)
+    )
+
+    sem_data_e_nao_cancelado = sem_data_entrega & ~status_cancelado
+
+    print("\n--- Investigação das datas de entrega ---")
+    print("Pedidos sem data de entrega:", sem_data_entrega.sum())
+
+    print(
+        "Pedidos sem data de entrega e não cancelados:",
+        sem_data_e_nao_cancelado.sum()
+    )
+
+    print("\nExemplos de pedidos sem entrega e não cancelados:")
+    print(
+        dados.loc[
+            sem_data_e_nao_cancelado,
+            ["pedido_id", "status_pedido", "data_entrega"]
+        ].head(3).to_string(index=False)
+    )
+
+    # Preserva os valores originais das datas de venda
+    dados["data_venda_original"] = dados["data_venda"].copy()
+
+    # Converte as datas usando o formato esperado
+    datas_convertidas = pd.to_datetime(
+        dados["data_venda"],
+        format="%Y-%m-%d %H:%M:%S",
+        errors="coerce"
+    )
+
+    # Identifica datas inválidas ou ausentes
+    data_venda_invalida = datas_convertidas.isna()
+
+    print("\n--- Investigação das datas de venda ---")
+    print("Total de datas inválidas ou ausentes:", data_venda_invalida.sum())
+
+    print("\nExemplos de datas inválidas:")
+    print(
+        dados.loc[
+            data_venda_invalida,
+            ["pedido_id", "data_venda_original"]
+        ].head(3).to_string(index=False)
+    )
+    
+    
+    # Cria colunas com informações extraídas da data de venda
+    dados["ano"] = datas_convertidas.dt.year
+    dados["mes"] = datas_convertidas.dt.month
+    dados["dia"] = datas_convertidas.dt.day
+    dados["hora"] = datas_convertidas.dt.hour
+
+    # Converte as colunas para inteiros que aceitam valores ausentes
+    dados["ano"] = dados["ano"].astype("Int64")
+    dados["mes"] = dados["mes"].astype("Int64")
+    dados["dia"] = dados["dia"].astype("Int64")
+    dados["hora"] = dados["hora"].astype("Int64")
+
+    # Formata a data para apresentação brasileira
+    dados["data_venda_formatada"] = datas_convertidas.dt.strftime("%d/%m/%Y")
+
+    print("\n--- Datas de venda processadas ---")
+    print(
+        dados[
+            [
+                "pedido_id",
+                "data_venda_original",
+                "ano",
+                "mes",
+                "dia",
+                "hora",
+                "data_venda_formatada"
+            ]
+        ].head(10).to_string(index=False)
+    )
+
+
+    print("\n--- Pedidos por canal de venda ---")
+
+    pedidos_por_canal = dados["canal_venda"].value_counts(dropna=False)
+
+    print(pedidos_por_canal.to_string())
+
+    print("\nTotal de pedidos contabilizados por canal:", pedidos_por_canal.sum())
+
+
+    print("\n--- Pedidos por ano e mês ---")
+
+    pedidos_por_periodo = (
+        dados.loc[~data_venda_invalida]
+        .groupby(["ano", "mes"])
+        .size()
+        .sort_index()
+    )
+
+    print(pedidos_por_periodo.to_string())
+
+    print(
+        "\nTotal de pedidos com data válida contabilizados por período:",
+        pedidos_por_periodo.sum()
+    )
+
+    print(
+        "Pedidos excluídos da análise por data inválida:",
+        data_venda_invalida.sum()
+    )
+
     
 # Executa a função principal quando este arquivo é iniciado diretamente.
 if __name__ == "__main__":
