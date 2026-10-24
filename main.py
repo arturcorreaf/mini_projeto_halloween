@@ -45,6 +45,47 @@ def padronizar_canal(canal): # Padronização da coluna canais.
     # Não inventa um canal quando o valor não é reconhecido.
     return canais_validos.get(canal, canal)
 
+def conferir_dados(dados):
+    """
+    Confere o total de pedidos e a distribuição por categoria e canal.
+    """
+
+    # Conta o total de registros do DataFrame.
+    total_pedidos = len(dados)
+
+    # Conta os pedidos por categoria e por canal.
+    total_categorias = dados["categoria"].value_counts().sum()
+    total_canais = dados["canal_venda"].value_counts().sum()
+
+    print("\n--- Conferência dos dados ---")
+    print("Total de pedidos:", total_pedidos)
+
+    print("\nPedidos por categoria:")
+    print(dados["categoria"].value_counts().to_string())
+
+    print("\nPedidos por canal:")
+    print(dados["canal_venda"].value_counts().to_string())
+
+    # Verifica se as contagens correspondem ao total de registros.
+    print("\n--- Verificação das somas ---")
+    print("Soma das categorias:", total_categorias)
+    print("Soma dos canais:", total_canais)
+
+    print(
+        "Categorias conferem com o total:",
+        total_categorias == total_pedidos
+    )
+    print(
+        "Canais conferem com o total:",
+        total_canais == total_pedidos
+    )
+
+def resumir_problemas_numericos(problema_quantidade, problema_preco, pedido_com_problema): # Exibe o resumo dos problemas encontrados nas colunas numéricas.
+
+    print("\n--- Resumo dos problemas numéricos ---")
+    print("Problemas em quantidade:", problema_quantidade.sum())
+    print("Problemas em preço unitário:", problema_preco.sum())
+    print("Pedidos distintos com problemas:", pedido_com_problema.sum())
 
 def main():   # Função principal do programa.
     dados = carregar_dados()
@@ -109,47 +150,96 @@ def main():   # Função principal do programa.
     print(dados["canal_venda"].value_counts(dropna=False))
 
     conferir_dados(dados)
+
     
+    # Investiga a coluna quantidade.
+    quantidade_num = pd.to_numeric(dados["quantidade"], errors="coerce")
 
-def conferir_dados(dados):
-    """
-    Confere o total de pedidos e a distribuição por categoria e canal.
-    """
-
-    # Conta o total de registros do DataFrame.
-    total_pedidos = len(dados)
-
-    # Conta os pedidos por categoria e por canal.
-    total_categorias = dados["categoria"].value_counts().sum()
-    total_canais = dados["canal_venda"].value_counts().sum()
-
-    print("\n--- Conferência dos dados ---")
-    print("Total de pedidos:", total_pedidos)
-
-    print("\nPedidos por categoria:")
-    print(dados["categoria"].value_counts().to_string())
-
-    print("\nPedidos por canal:")
-    print(dados["canal_venda"].value_counts().to_string())
-
-    # Verifica se as contagens correspondem ao total de registros.
-    print("\n--- Verificação das somas ---")
-    print("Soma das categorias:", total_categorias)
-    print("Soma dos canais:", total_canais)
-
+    print("\n--- Investigação: quantidade ---")
+    print("Tipo da coluna:", dados["quantidade"].dtype)
+    print("Valores ausentes:", dados["quantidade"].isna().sum())
     print(
-        "Categorias conferem com o total:",
-        total_categorias == total_pedidos
+        "Valores não numéricos:",
+        (dados["quantidade"].notna() & quantidade_num.isna()).sum()
     )
     print(
-        "Canais conferem com o total:",
-        total_canais == total_pedidos
+        "Valores menores ou iguais a zero:",
+        (quantidade_num <= 0).sum()
+    )
+    print(
+        "Valores não inteiros:",
+        (
+            quantidade_num.notna()
+            & (quantidade_num % 1 != 0)
+        ).sum()
+    )
+
+    # Investiga a coluna preco_unitario.
+    preco_num = pd.to_numeric(dados["preco_unitario"], errors="coerce")
+
+    print("\n--- Investigação: preco_unitario ---")
+    print("Tipo da coluna:", dados["preco_unitario"].dtype)
+    print("Valores ausentes:", dados["preco_unitario"].isna().sum())
+    print(
+        "Valores não numéricos:",
+        (dados["preco_unitario"].notna() & preco_num.isna()).sum()
+    )
+    print(
+        "Valores menores que zero:",
+        (preco_num < 0).sum()
     )
 
 
+    # Identifica problemas na quantidade.
+    problema_quantidade = (
+        quantidade_num.isna()
+        | (quantidade_num <= 0)
+        | (quantidade_num % 1 != 0)
+    )
 
+    # Identifica problemas no preço unitário.
+    problema_preco = (
+        preco_num.isna()
+        | (preco_num < 0)
+    )
 
+    # Marca pedidos que possuem pelo menos um dos problemas.
+    pedido_com_problema = problema_quantidade | problema_preco
 
+    print("\n--- Resumo da validação numérica ---")
+    print("Pedidos com quantidade inválida:", problema_quantidade.sum())
+    print("Pedidos com preço inválido:", problema_preco.sum())
+    print("Total de pedidos com algum problema:", pedido_com_problema.sum())
+
+    # Separa os registros problemáticos para inspeção, sem excluí-los.
+    pedidos_problematicos = dados.loc[pedido_com_problema].copy()
+
+    print("\nPedidos que precisam de atenção:")
+    print(
+        pedidos_problematicos[
+            ["pedido_id", "quantidade", "preco_unitario"]
+        ].to_string(index=False)
+    )
+
+     # Registra a situação da validação em cada pedido.
+    dados["problema_quantidade"] = problema_quantidade
+    dados["problema_preco"] = problema_preco
+    dados["pedido_com_problema"] = pedido_com_problema
+
+    print("\n--- Situação dos registros ---")
+    print(
+        dados["pedido_com_problema"]
+        .value_counts()
+        .rename(index={True: "Com problema", False: "Sem problema"})
+    )
+
+    resumir_problemas_numericos(
+        problema_quantidade,
+        problema_preco,
+        pedido_com_problema
+    )
+
+    
 # Executa a função principal quando este arquivo é iniciado diretamente.
 if __name__ == "__main__":
     main()
