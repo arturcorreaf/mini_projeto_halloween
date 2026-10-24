@@ -60,7 +60,7 @@ def main():
         sem_data_cancelados
     ) = investigar_entregas(dados)
 
-    print("\nInvestigação das datas de entrega")
+    print("\n- Investigação das datas de entrega -")
     print(f"Total sem data de entrega: {sem_data_entrega.sum()}")
     print(f"Sem data e cancelados: {sem_data_cancelados.sum()}")
     print(
@@ -87,7 +87,7 @@ def main():
     # Processa as datas de venda
     dados, _, data_venda_invalida = processar_datas(dados)
 
-    print("\nDatas de venda")
+    print("\n- Datas de venda -")
     print(f"Datas inválidas ou ausentes: {data_venda_invalida.sum()}")
 
     if data_venda_invalida.any():
@@ -159,11 +159,11 @@ def main():
             f"{quantidade_maior_canal} pedidos ({percentual:.2f}%)."
         )
         print(
-            "Interpretação: esse canal concentrou a maior quantidade "
+            "Interpretação: Esse canal concentrou a maior quantidade "
             "de pedidos registrados."
         )
         print(
-            "Limitação: volume de pedidos não indica receita "
+            "Limitação: Volume de pedidos não indica receita "
             "nem confirma a conclusão das vendas."
         )
     else:
@@ -180,11 +180,11 @@ def main():
             f"{quantidade_maior_periodo} pedidos."
         )
         print(
-            "Interpretação: esse foi o período com mais pedidos "
+            "Interpretação: Esse foi o período com mais pedidos "
             "registrados entre aqueles com data válida."
         )
         print(
-            "Limitação: quatro datas inválidas ou ausentes foram "
+            "Limitação: Quatro datas inválidas ou ausentes foram "
             "excluídas da análise; o volume não representa receita "
             "nem vendas concluídas."
         )
@@ -205,7 +205,7 @@ def main():
     print(f"Dados processados: {caminho_saida}")
     print(f"Resumo por canal: {caminho_resumo_canal}")
     print(f"Resumo por período: {caminho_resumo_periodo}")
-    print("\nAnálise concluída!")
+    print("\nAnálise concluída com sucesso!")
 
   
 # Executa a função principal quando este arquivo é iniciado diretamente.
