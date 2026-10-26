@@ -124,7 +124,7 @@ Esse resultado indica que Web concentrou a maior quantidade de pedidos registrad
 
 A análise considera somente datas de venda válidas, excluindo quatro registros com datas ausentes ou inválidas. A contagem representa pedidos registrados, independentemente do status, e não receita ou vendas concluídas.
 
-## 📌 Conclusão
+## Conclusão
 
 O projeto permitiu praticar etapas fundamentais de um fluxo de análise de dados: leitura, limpeza, padronização, validação, transformação, investigação de inconsistências e geração de resumos.
 
