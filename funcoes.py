@@ -2,11 +2,12 @@ import pandas as pd
 import re
 from datetime import datetime
 
-def carregar_dados():  # Lê o arquivo CSV e armazena os registros em um DataFrame e retorna. O separador é a vírgula e a codificação utf-8.
+def carregar_dados(): 
+    # Lê o arquivo CSV e armazena os registros em um DataFrame e retorna. O separador é a vírgula e a codificação utf-8.
     dados = pd.read_csv("Arquivos/halloween_vendas.csv", sep=",", encoding="utf-8")
     return dados
 
-def limpar_categoria(categoria): # Padronização da coluna categoria.
+def limpar_categoria(categoria): 
 
     # Trata valores ausentes sem inventar uma categoria específica.
     if pd.isna(categoria):
@@ -45,7 +46,7 @@ def limpar_categorias(dados):
 
     return dados, categorias_vazias, categorias_alteradas
 
-def padronizar_canal(canal): # Padronização da coluna canais.
+def padronizar_canal(canal): 
      # Mantém valores ausentes para que possam ser identificados depois.
     if pd.isna(canal):
         return canal
@@ -113,8 +114,8 @@ def conferir_dados(dados):
         total_canais == total_pedidos
     )
 
-def resumir_problemas_numericos(problema_quantidade, problema_preco, pedido_com_problema): # Exibe o resumo dos problemas encontrados nas colunas numéricas.
-
+def resumir_problemas_numericos(problema_quantidade, problema_preco, pedido_com_problema): 
+    # Exibe o resumo dos problemas encontrados nas colunas numéricas.
     print("\n--- Resumo dos problemas numéricos ---")
     print("Problemas em quantidade:", problema_quantidade.sum())
     print("Problemas em preço unitário:", problema_preco.sum())
@@ -282,30 +283,23 @@ def contar_pedidos_cancelados(dados):
 
     return status_cancelado.sum()
 
-def exportar_resumo_canal(pedidos_por_canal_reconhecido):
-    resumo_canal = pedidos_por_canal_reconhecido.rename(
-        "quantidade_pedidos"
-    ).reset_index()
 
-    resumo_canal = resumo_canal.rename(
-        columns={"index": "canal_venda"}
-    )
+def exportar_resumo_canal(pedidos_por_canal):
+    resumo = pedidos_por_canal.sort_values(ascending=False).reset_index()
 
-    resumo_canal["percentual"] = (
-        resumo_canal["quantidade_pedidos"]
-        / resumo_canal["quantidade_pedidos"].sum()
-        * 100
-    ).round(2)
+    resumo.columns = ["Canal", "Pedidos"]
+
+    total_pedidos = resumo["Pedidos"].sum()
+
+    resumo["Participação (%)"] = (
+        resumo["Pedidos"] / total_pedidos * 100
+    ).round(1)
 
     caminho_saida = "Arquivos/resumo_por_canal.csv"
-
-    resumo_canal.to_csv(
-        caminho_saida,
-        index=False,
-        encoding="utf-8-sig"
-    )
+    resumo.to_csv(caminho_saida, index=False, encoding="utf-8-sig")
 
     return caminho_saida
+
 
 def exportar_resumo_periodo(pedidos_por_periodo):
     resumo_periodo = pedidos_por_periodo.rename(
